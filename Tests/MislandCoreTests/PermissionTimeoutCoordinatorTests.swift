@@ -26,10 +26,11 @@ final class PermissionTimeoutCoordinatorTests: XCTestCase {
         }
     }
 
-    private func ingestApproval(_ store: SessionStore, nonce: String) {
+    private func ingestApproval(_ store: SessionStore, nonce: String, sessionId: String = "default") {
         store.ingest(
             payload: [
                 "status": "waiting_for_approval",
+                "session_id": sessionId,
                 "tool": "Bash",
                 "tool_use_id": "u-\(nonce)",
             ],
@@ -151,5 +152,89 @@ final class PermissionTimeoutCoordinatorTests: XCTestCase {
         ingestApproval(store, nonce: "after-restart")
         waitFor { recorder.snapshot.count == 1 }
         XCTAssertEqual(recorder.snapshot.first?.nonce, "after-restart")
+    }
+
+    // MARK: - Multi-session
+
+    func testMultipleSessionsEachGetIndependentTimer() {
+        let store = SessionStore()
+        let recorder = RecordingResponder()
+        let coord = PermissionTimeoutCoordinator(
+            timeout: testTimeout, store: store, respond: recorder.handler()
+        )
+        coord.start()
+        defer { coord.stop() }
+
+        ingestApproval(store, nonce: "n1", sessionId: "claude-A")
+        ingestApproval(store, nonce: "n2", sessionId: "claude-B")
+        XCTAssertEqual(coord.armedCount, 2)
+        XCTAssertEqual(coord.armedNonces, ["n1", "n2"])
+
+        // Both timers should fire deny independently.
+        waitFor { recorder.snapshot.count == 2 }
+        let nonces = Set(recorder.snapshot.map(\.nonce))
+        XCTAssertEqual(nonces, ["n1", "n2"])
+        XCTAssertEqual(recorder.snapshot.allSatisfy { $0.decision == .deny }, true)
+    }
+
+    func testResolvingOneSessionDoesNotCancelOthers() {
+        let store = SessionStore()
+        let recorder = RecordingResponder()
+        let coord = PermissionTimeoutCoordinator(
+            timeout: 0.5, store: store, respond: recorder.handler()
+        )
+        coord.start()
+        defer { coord.stop() }
+
+        ingestApproval(store, nonce: "n1", sessionId: "claude-A")
+        ingestApproval(store, nonce: "n2", sessionId: "claude-B")
+        XCTAssertEqual(coord.armedCount, 2)
+
+        // User resolves session A by sending a non-approval status.
+        store.ingest(
+            payload: ["status": "processing", "session_id": "claude-A"],
+            envelopeNonce: "resolve-A"
+        )
+        waitFor(timeout: 0.3) { coord.armedNonces == ["n2"] }
+        XCTAssertEqual(coord.armedNonces, ["n2"], "only A's timer cancels; B keeps counting")
+
+        // B's timer still fires.
+        waitFor(timeout: 1.0) { recorder.snapshot.count == 1 }
+        XCTAssertEqual(recorder.snapshot.first?.nonce, "n2")
+    }
+
+    func testThreeSessionsAllFireWhenLeftAlone() {
+        let store = SessionStore()
+        let recorder = RecordingResponder()
+        let coord = PermissionTimeoutCoordinator(
+            timeout: testTimeout, store: store, respond: recorder.handler()
+        )
+        coord.start()
+        defer { coord.stop() }
+
+        ingestApproval(store, nonce: "a", sessionId: "s1")
+        ingestApproval(store, nonce: "b", sessionId: "s2")
+        ingestApproval(store, nonce: "c", sessionId: "s3")
+        XCTAssertEqual(coord.armedCount, 3)
+
+        waitFor { recorder.snapshot.count == 3 }
+        XCTAssertEqual(Set(recorder.snapshot.map(\.nonce)), ["a", "b", "c"])
+    }
+
+    func testStopCancelsAllArmedTimers() {
+        let store = SessionStore()
+        let recorder = RecordingResponder()
+        let coord = PermissionTimeoutCoordinator(
+            timeout: 0.5, store: store, respond: recorder.handler()
+        )
+        coord.start()
+
+        ingestApproval(store, nonce: "n1", sessionId: "s1")
+        ingestApproval(store, nonce: "n2", sessionId: "s2")
+        XCTAssertEqual(coord.armedCount, 2)
+
+        coord.stop()
+        Thread.sleep(forTimeInterval: 0.6)
+        XCTAssertEqual(recorder.snapshot, [], "stop() must cancel every timer")
     }
 }
