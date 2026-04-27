@@ -22,9 +22,25 @@ struct NotchView: View {
             VStack(spacing: 0) {
                 topStrip
                     .frame(height: geometry.notchHeight)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        // Tap to collapse / re-expand. Animated by SwiftUI;
+                        // panel frame animation is driven by NSAnimationContext
+                        // in NotchPanelController so they stay in sync.
+                        withAnimation(.easeOut(duration: 0.32)) {
+                            state.toggleManualCollapse()
+                        }
+                    }
                 drawer
+                    .transition(.asymmetric(
+                        insertion: .opacity.combined(with: .move(edge: .top)),
+                        removal: .opacity
+                    ))
             }
         }
+        .animation(.easeOut(duration: 0.32), value: state.session.pendingPermission?.envelopeNonce)
+        .animation(.easeOut(duration: 0.32), value: state.displayableSessions.count)
+        .animation(.easeOut(duration: 0.32), value: state.userCollapsed)
         .contextMenu {
             Button("Settings…") { openWindow(id: "settings") }
             Divider()
@@ -44,7 +60,7 @@ struct NotchView: View {
         }
     }
 
-    /// Drawer content. Empty → drawer not even rendered (panel collapses).
+    /// Drawer content. Empty / userCollapsed → drawer not rendered.
     @ViewBuilder
     private var drawer: some View {
         if let pending = state.session.pendingPermission {
@@ -54,7 +70,7 @@ struct NotchView: View {
             .colorScheme(.dark)
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
-        } else if !state.displayableSessions.isEmpty {
+        } else if !state.displayableSessions.isEmpty && !state.userCollapsed {
             SessionListDrawer()
         }
     }
@@ -161,6 +177,10 @@ private struct SessionListDrawer: View {
         VStack(spacing: 6) {
             ForEach(state.displayableSessions, id: \.sessionId) { session in
                 SessionRow(session: session)
+                    .transition(.asymmetric(
+                        insertion: .opacity.combined(with: .scale(scale: 0.95, anchor: .top)),
+                        removal: .opacity
+                    ))
             }
         }
     }

@@ -68,18 +68,21 @@ final class NotchPanelController {
     }
 
     private func observeState() {
-        // Auto-expand whenever EITHER a permission is pending OR there is at
-        // least one displayable session (status != idle/ended/unknown).
-        // When everything goes idle the panel collapses back to the bare bar.
-        stateCancellable = Publishers.CombineLatest(
-            appState.$session.map { $0.pendingPermission != nil },
-            appState.$displayableSessions.map { !$0.isEmpty }
-        )
-        .map { hasPending, hasActive in hasPending || hasActive }
-        .removeDuplicates()
-        .sink { [weak self] expanded in
-            self?.setExpanded(expanded)
-        }
+        // Three signals fold together to decide expanded vs. collapsed:
+        //   pending: a permission is awaiting decision (forces expand)
+        //   active:  there is at least one non-idle session
+        //   userCollapsed: user tapped to suppress auto-expand
+        // Result: pending OR (active AND !userCollapsed)
+        let pending = appState.$session.map { $0.pendingPermission != nil }
+        let active  = appState.$displayableSessions.map { !$0.isEmpty }
+        let userCollapsed = appState.$userCollapsed
+
+        stateCancellable = Publishers.CombineLatest3(pending, active, userCollapsed)
+            .map { p, a, hidden in p || (a && !hidden) }
+            .removeDuplicates()
+            .sink { [weak self] expanded in
+                self?.setExpanded(expanded)
+            }
     }
 
     private func repositionForScreens() {
@@ -100,6 +103,18 @@ final class NotchPanelController {
 
     private func applyFrame(animated: Bool = false) {
         let frame = isExpanded ? geometry.expandedFrame() : geometry.collapsedFrame()
-        panel.setFrame(frame, display: true, animate: animated)
+        if animated {
+            // Use NSAnimationContext with explicit timing so the resize feels
+            // smooth and stays in sync with the SwiftUI content's own
+            // .animation modifier (same duration + easing curve).
+            NSAnimationContext.runAnimationGroup { ctx in
+                ctx.duration = 0.32
+                ctx.timingFunction = CAMediaTimingFunction(name: .easeOut)
+                ctx.allowsImplicitAnimation = true
+                panel.animator().setFrame(frame, display: true)
+            }
+        } else {
+            panel.setFrame(frame, display: false)
+        }
     }
 }

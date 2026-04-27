@@ -10,6 +10,10 @@ final class AppState: ObservableObject {
     /// Sessions to surface in the expansion drawer. Filtered to non-idle/ended,
     /// sorted most-recent-first. Empty → drawer stays collapsed.
     @Published private(set) var displayableSessions: [SessionState] = []
+    /// User explicitly tapped to hide the drawer. Suppresses auto-expansion
+    /// even when sessions are active. Auto-cleared when displayableSessions
+    /// becomes empty so a fresh batch of sessions auto-expands again.
+    @Published private(set) var userCollapsed: Bool = false
     @Published private(set) var startupError: String?
     @Published var soundMuted: Bool {
         didSet { UserDefaults.standard.set(soundMuted, forKey: "misland.sound.muted") }
@@ -117,13 +121,26 @@ final class AppState: ObservableObject {
         let prev = session
         session = new
         if let runtime {
-            // Filter to "active" — anything but idle/ended/unknown.
-            // Sorted most-recent-first so the freshest task is on top.
             displayableSessions = runtime.store.sessions
                 .filter { $0.status != .idle && $0.status != .ended && $0.status != .unknown }
                 .sorted { $0.lastUpdate > $1.lastUpdate }
         }
+        // When everything goes idle/ended, reset the manual-collapse flag so a
+        // future batch of sessions auto-expands again (otherwise the user's
+        // earlier "hide" intent would stick forever).
+        if displayableSessions.isEmpty && userCollapsed {
+            userCollapsed = false
+        }
         triggerSounds(prev: prev, new: new)
+    }
+
+    /// Tap on the notch bar: collapse if currently expanded, expand if there
+    /// are sessions to show. No-op while a permission panel is up so the user
+    /// doesn't accidentally dismiss it.
+    func toggleManualCollapse() {
+        guard session.pendingPermission == nil else { return }
+        guard !displayableSessions.isEmpty else { return }
+        userCollapsed.toggle()
     }
 
     private func triggerSounds(prev: SessionState, new: SessionState) {
