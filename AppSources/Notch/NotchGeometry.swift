@@ -19,10 +19,13 @@ struct NotchGeometry {
     /// session list. Rows are ~52pt; this height comfortably shows ~3 rows
     /// plus the "N sessions" header and padding. Beyond that the list scrolls.
     static let expandedDrawerHeight: CGFloat = 260
-    /// Top-corner radius of the bar — small inward curve at the wing tips.
-    static let topCornerRadius: CGFloat = 8
-    /// Bottom-corner radius of the bar — larger outward rounding.
-    static let bottomCornerRadius: CGFloat = 16
+    /// Top-corner inward curve at the wing tips. A pronounced radius here is
+    /// what makes the wings visually "grow out of" the notch instead of
+    /// looking like rectangular extrusions.
+    static let topCornerRadius: CGFloat = 18
+    /// Bottom-corner outward rounding where the wing's lower edge curves into
+    /// the wallpaper. Larger value = softer transition.
+    static let bottomCornerRadius: CGFloat = 32
 
     let screen: NSScreen
     let isNotched: Bool
