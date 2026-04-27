@@ -1,111 +1,85 @@
-name: CI                                                                                                                 
-                   
-on:                                                                                                                      
-  push:                                
-    branches: [main]                                                                                                     
-  pull_request:                     
-    branches: [main]                                                                                                     
-                                        
-# Cancel in-progress runs for the same ref when a new commit lands.                                                      
-concurrency:          
-  group: ci-${{ github.ref }}                                                                                            
-  cancel-in-progress: true              
-                                                                                                                         
-jobs:                 
-  build-and-test:                                                                                                        
-    name: Build & test (macOS)          
-    runs-on: macos-14                                                                                                    
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build & test (macOS)
+    runs-on: macos-14
     timeout-minutes: 20
-                                                                                                                         
-    steps:                              
-      - name: Checkout              
+    steps:
+      - name: Checkout
         uses: actions/checkout@v4
-                                                                                                                         
-      - name: Show toolchain            
-        run: |                                                                                                           
-          sw_vers      
+
+      - name: Show toolchain
+        run: |
+          sw_vers
           xcodebuild -version
           swift --version
-                                       
-      # SwiftPM artifacts (the .build/ tree) are reusable across runs as long
-      # as Package.swift and source SHAs haven't changed for that hash key.                                              
+
       - name: Cache SwiftPM build
-        uses: actions/cache@v4                                                                                           
-        with:                                                                                                            
+        uses: actions/cache@v4
+        with:
           path: .build
-          key: spm-${{ runner.os }}-${{ hashFiles('Package.swift', 'Sources/**/*.swift') }}                              
-          restore-keys: |              
-            spm-${{ runner.os }}-                                                                                        
-                                    
-      - name: Swift build (Core + miomini-hook)                                                                          
+          key: spm-${{ runner.os }}-${{ hashFiles('Package.swift', 'Sources/**/*.swift') }}
+          restore-keys: |
+            spm-${{ runner.os }}-
+
+      - name: Swift build (Core + miomini-hook)
         run: swift build --product miomini-hook
-                                    
-      - name: Swift test (95 unit + integration tests)                                                                   
-        run: swift test --parallel     
-                                                                                                                         
-      - name: Install xcodegen      
+
+      - name: Swift test (95 unit + integration tests)
+        run: swift test --parallel
+
+      - name: Install xcodegen
         run: brew install xcodegen
-                      
-      - name: Generate Xcode project   
-        run: xcodegen generate          
-                                                                                                                         
-      # The app build re-runs `swift build` inside its postBuild phase, but
-      # the cache hit from the earlier step keeps it fast.                                                               
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
       - name: Build MioMini.app
-        run: |                                                                                                           
-          xcodebuild -project MioMini.xcodeproj \
-            -scheme MioMini \                                                                                            
-            -configuration Debug \      
-            -destination 'platform=macOS' \
-            CODE_SIGN_IDENTITY='-' \                                                                                     
-            CODE_SIGN_STYLE=Automatic \
-            DEVELOPMENT_TEAM='' \                                                                                        
-            ENABLE_HARDENED_RUNTIME=NO \                                                                                 
-            build  
-                                                                                                                         
-      - name: Locate built bundle      
-        id: bundle                      
-        run: |                      
-          APP=$(find ~/Library/Developer/Xcode/DerivedData/MioMini-* \
-                  -name 'Mio Mini.app' -type d -maxdepth 5 2>/dev/null | head -1)                                        
-          if [ -z "$APP" ]; then                                                                                         
-            echo "::error::No 'Mio Mini.app' produced by xcodebuild"                                                     
-            exit 1                                                                                                       
-          fi           
+        run: >
+          xcodebuild
+          -project MioMini.xcodeproj
+          -scheme MioMini
+          -configuration Debug
+          -destination 'platform=macOS'
+          CODE_SIGN_IDENTITY='-'
+          CODE_SIGN_STYLE=Automatic
+          DEVELOPMENT_TEAM=''
+          ENABLE_HARDENED_RUNTIME=NO
+          build
+
+      - name: Locate built bundle
+        id: bundle
+        run: |
+          APP="$(find ~/Library/Developer/Xcode/DerivedData/MioMini-* -name 'Mio Mini.app' -type d -maxdepth 5 2>/dev/null | head -1)"
+          if [ -z "$APP" ]; then echo "::error::No 'Mio Mini.app' produced by xcodebuild"; exit 1; fi
           echo "path=$APP" >> "$GITHUB_OUTPUT"
-          echo "Found: $APP"                                                                                             
-                                        
-      - name: Verify bundle integrity                                                                                    
-        run: |                      
-          APP="${{ steps.bundle.outputs.path }}"
-          codesign --verify --strict --verbose=2 "$APP"                                                                  
-                                       
-      - name: Verify miomini-hook embedded                                                                               
-        run: |                      
-          APP="${{ steps.bundle.outputs.path }}"
-          BIN="$APP/Contents/MacOS/miomini-hook"                                                                         
-          if [ ! -f "$BIN" ]; then     
-            echo "::error::miomini-hook missing from bundle"                                                             
-            exit 1                                                                                                       
-          fi       
-          file "$BIN"                                                                                                    
-          echo '{"hook_event_name":"PreToolUse","cwd":"/tmp","tool_name":"Bash","tool_input":{"command":"ls"}}' \
-            | "$BIN"                                                                                                     
-          echo "exit=$?"            
-          # fail-open semantics: bridge with no server should exit 0.                                                    
-          # The pipe above succeeds = exit 0 = correct.                                                                  
-                                    
-      - name: Verify localizations compiled                                                                              
-        run: |                         
-          APP="${{ steps.bundle.outputs.path }}"
-          STRINGS="$APP/Contents/Resources/zh-Hans.lproj/Localizable.strings"                                            
-          if [ ! -f "$STRINGS" ]; then 
-            echo "::error::zh-Hans Localizable.strings missing from bundle"                                              
-            exit 1                  
-          fi                                                                                                             
-          COUNT=$(plutil -p "$STRINGS" | grep -c '=>')
-          echo "zh-Hans translations: $COUNT"                                                                            
-          if [ "$COUNT" -lt 40 ]; then  
-            echo "::error::expected ≥40 translated strings, got $COUNT"                                                  
-            exit 1                                                                                                       
-          fi 
+          echo "Found: $APP"
+
+      - name: Verify bundle integrity
+        run: codesign --verify --strict --verbose=2 "${{ steps.bundle.outputs.path }}"
+
+      - name: Verify miomini-hook embedded + fail-open smoke
+        run: |
+          BIN="${{ steps.bundle.outputs.path }}/Contents/MacOS/miomini-hook"
+          if [ ! -f "$BIN" ]; then echo "::error::miomini-hook missing from bundle"; exit 1; fi
+          file "$BIN"
+          echo '{"hook_event_name":"PreToolUse","cwd":"/tmp","tool_name":"Bash","tool_input":{"command":"ls"}}' | "$BIN"
+
+      - name: Verify zh-Hans localizations
+        run: |
+          STRINGS="${{ steps.bundle.outputs.path }}/Contents/Resources/zh-Hans.lproj/Localizable.strings"
+          if [ ! -f "$STRINGS" ]; then echo "::error::zh-Hans Localizable.strings missing"; exit 1; fi
+          COUNT="$(plutil -p "$STRINGS" | grep -c '=>' || true)"
+          echo "zh-Hans translations: $COUNT"
+          if [ "$COUNT" -lt 40 ]; then echo "::error::expected >=40 strings, got $COUNT"; exit 1; fi
