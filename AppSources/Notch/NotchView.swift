@@ -92,6 +92,9 @@ private struct LeftWing: View {
                 .foregroundStyle(.white)
                 .lineLimit(1)
         }
+        // Outer (leading) padding keeps content off the inward curve at the
+        // wing tip; inner (trailing) padding keeps it off the notch.
+        .padding(.leading, 22)
         .padding(.trailing, 10)
     }
 
@@ -122,12 +125,14 @@ private struct RightWing: View {
                     .lineLimit(1)
                     .truncationMode(.head)
             }
-            if let source = state.session.source {
-                AgentBadge(source: source)
-            }
             Spacer(minLength: 0)
         }
+        // Inner padding (leading) keeps content off the notch.
+        // Outer padding (trailing) keeps content well inside the visible
+        // black region — the wing tip's inward curve eats up to topCornerRadius
+        // (18pt) so 22pt of trailing margin gives a 4pt safety gap.
         .padding(.leading, 10)
+        .padding(.trailing, 22)
     }
 
     private func projectName(from path: String) -> String {
