@@ -13,8 +13,10 @@ concurrency:
 jobs:
   build-and-test:
     name: Build & test (macOS)
-    runs-on: macos-14
-    timeout-minutes: 20
+    # macos-15 ships Xcode 16, which understands newer .xcodeproj formats than
+    # the macos-14 image (Xcode 15.4).
+    runs-on: macos-15
+    timeout-minutes: 25
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -39,8 +41,17 @@ jobs:
       - name: Swift test (95 unit + integration tests)
         run: swift test --parallel
 
-      - name: Install xcodegen
-        run: brew install xcodegen
+      # Pin xcodegen to a version that targets a project format the runner's
+      # Xcode can read. The latest xcodegen (2.45+) produces objectVersion 77
+      # which only Xcode 26+ can open. v2.39.0 produces objectVersion 56,
+      # readable by every Xcode >= 13.
+      - name: Install xcodegen 2.39.0 (Xcode 15+ compatible)
+        run: |
+          curl -fsSL -o xcodegen.zip https://github.com/yonaskolb/XcodeGen/releases/download/2.39.0/xcodegen.zip
+          unzip -q xcodegen.zip -d xcodegen-tool
+          chmod +x xcodegen-tool/bin/xcodegen
+          sudo mv xcodegen-tool/bin/xcodegen /usr/local/bin/xcodegen
+          xcodegen --version
 
       - name: Generate Xcode project
         run: xcodegen generate
