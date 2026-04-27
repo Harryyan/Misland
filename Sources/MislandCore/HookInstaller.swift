@@ -1,11 +1,11 @@
 import Foundation
 
-/// Merge / unmerge MioMini's Claude Code hook entries into the user's
+/// Merge / unmerge Misland's Claude Code hook entries into the user's
 /// `~/.claude/settings.json` without touching anything the user has put there.
 ///
 /// Strategy
 /// --------
-/// Every entry we add carries a marker key `_miomini_managed: true`. On
+/// Every entry we add carries a marker key `_misland_managed: true`. On
 /// uninstall we filter out only entries with that marker, leaving any user-defined
 /// hooks for the same event intact. Schema-wise Claude Code's hook config is
 /// permissive about extra keys on the matcher group — we are not adding fields
@@ -14,7 +14,7 @@ import Foundation
 /// All operations are pure: caller reads the file, calls these functions, writes
 /// the result back atomically.
 public enum HookInstaller {
-    public static let managedMarker = "_miomini_managed"
+    public static let managedMarker = "_misland_managed"
 
     /// Events we hook. Mirrors `HookEventMapper`'s vocabulary.
     public static let managedEvents: [String] = [

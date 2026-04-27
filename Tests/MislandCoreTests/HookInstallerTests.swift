@@ -1,8 +1,8 @@
 import XCTest
-@testable import MioMiniCore
+@testable import MislandCore
 
 final class HookInstallerTests: XCTestCase {
-    let bridgePath = "/Applications/MioMini.app/Contents/MacOS/miomini-hook"
+    let bridgePath = "/Applications/Misland.app/Contents/MacOS/misland-hook"
 
     func testInstallIntoEmptySettings() {
         let installed = HookInstaller.install(into: [:], bridgePath: bridgePath)
@@ -53,8 +53,8 @@ final class HookInstallerTests: XCTestCase {
     }
 
     func testReinstallUpdatesPath() {
-        let oldPath = "/old/path/miomini-hook"
-        let newPath = "/Applications/MioMini.app/Contents/MacOS/miomini-hook"
+        let oldPath = "/old/path/misland-hook"
+        let newPath = "/Applications/Misland.app/Contents/MacOS/misland-hook"
         let s1 = HookInstaller.install(into: [:], bridgePath: oldPath)
         XCTAssertTrue(HookInstaller.isInstalled(in: s1, bridgePath: oldPath))
 

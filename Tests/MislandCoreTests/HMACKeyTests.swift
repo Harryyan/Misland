@@ -1,5 +1,5 @@
 import XCTest
-@testable import MioMiniCore
+@testable import MislandCore
 
 final class HMACKeyTests: XCTestCase {
     private var sandboxRoot: URL!
@@ -7,7 +7,7 @@ final class HMACKeyTests: XCTestCase {
     override func setUp() {
         super.setUp()
         sandboxRoot = URL(fileURLWithPath: NSTemporaryDirectory())
-            .appendingPathComponent("MioMiniTests-\(UUID().uuidString)", isDirectory: true)
+            .appendingPathComponent("MislandTests-\(UUID().uuidString)", isDirectory: true)
         SecurityPaths.overrideRoot = sandboxRoot
     }
 

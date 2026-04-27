@@ -1,25 +1,25 @@
 import XCTest
 import Darwin
-@testable import MioMiniCore
+@testable import MislandCore
 
 /// Composition smoke test. Spins up a real runtime against a sandbox, drives
 /// the full pipe (bridge → server → store → timeout coordinator) end-to-end,
 /// and verifies that an idle (no UI click) PermissionRequest auto-denies.
-final class MioMiniRuntimeTests: XCTestCase {
+final class MislandRuntimeTests: XCTestCase {
     private var sandboxRoot: URL!
     private var socketPath: String!
     private var settingsPath: String!
-    private var runtime: MioMiniRuntime!
+    private var runtime: MislandRuntime!
 
     override func setUp() {
         super.setUp()
         let shortID = String(UUID().uuidString.prefix(8))
         sandboxRoot = URL(fileURLWithPath: NSTemporaryDirectory())
-            .appendingPathComponent("MioMiniRT-\(shortID)", isDirectory: true)
+            .appendingPathComponent("MislandRT-\(shortID)", isDirectory: true)
         SecurityPaths.overrideRoot = sandboxRoot
         socketPath = "/tmp/mm-rt-\(shortID).sock"
         settingsPath = sandboxRoot.appendingPathComponent("settings.json").path
-        runtime = try! MioMiniRuntime(
+        runtime = try! MislandRuntime(
             permissionTimeout: 0.1,    // fast tests
             socketPath: socketPath,
             settingsPath: settingsPath
@@ -80,7 +80,7 @@ final class MioMiniRuntimeTests: XCTestCase {
     }
 
     func testInstallerWiredToCorrectPath() throws {
-        try runtime.installer.install(bridgePath: "/test/path/miomini-hook")
-        XCTAssertTrue(runtime.installer.isInstalled(bridgePath: "/test/path/miomini-hook"))
+        try runtime.installer.install(bridgePath: "/test/path/misland-hook")
+        XCTAssertTrue(runtime.installer.isInstalled(bridgePath: "/test/path/misland-hook"))
     }
 }

@@ -5,7 +5,7 @@ import Foundation
 /// understands. Keeping this pure makes it the most testable part of the bridge.
 public enum HookEventMapper {
     /// Probe markers for third-party telemetry/CI sessions we should ignore.
-    public static let probeMarkers: Set<String> = ["ClaudeProbe", "MioMiniProbe", "CodexBar"]
+    public static let probeMarkers: Set<String> = ["ClaudeProbe", "MislandProbe", "CodexBar"]
 
     public enum MapDecision: Equatable {
         /// Forward this payload to the app.

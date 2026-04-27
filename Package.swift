@@ -2,26 +2,26 @@
 import PackageDescription
 
 let package = Package(
-    name: "MioMini",
+    name: "Misland",
     platforms: [.macOS(.v14)],
     products: [
-        .library(name: "MioMiniCore", targets: ["MioMiniCore"]),
-        .executable(name: "miomini-hook", targets: ["HookBridge"]),
+        .library(name: "MislandCore", targets: ["MislandCore"]),
+        .executable(name: "misland-hook", targets: ["HookBridge"]),
     ],
     targets: [
         .target(
-            name: "MioMiniCore",
-            path: "Sources/MioMiniCore"
+            name: "MislandCore",
+            path: "Sources/MislandCore"
         ),
         .executableTarget(
             name: "HookBridge",
-            dependencies: ["MioMiniCore"],
+            dependencies: ["MislandCore"],
             path: "Sources/HookBridge"
         ),
         .testTarget(
-            name: "MioMiniCoreTests",
-            dependencies: ["MioMiniCore"],
-            path: "Tests/MioMiniCoreTests"
+            name: "MislandCoreTests",
+            dependencies: ["MislandCore"],
+            path: "Tests/MislandCoreTests"
         ),
     ]
 )

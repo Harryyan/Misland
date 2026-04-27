@@ -1,13 +1,13 @@
 import Foundation
 
-/// Canonical filesystem paths for MioMini private state.
+/// Canonical filesystem paths for Misland private state.
 ///
-/// All paths live under `~/Library/Application Support/MioMini/`. The directory is
+/// All paths live under `~/Library/Application Support/Misland/`. The directory is
 /// created (and re-asserted) with mode 0700 so other local users cannot list, read,
 /// or place files inside it. This is the foundation of the local security model
 /// (PRD §6 SEC-1).
 public enum SecurityPaths {
-    public static let directoryName = "MioMini"
+    public static let directoryName = "Misland"
     public static let socketFileName = "control.sock"
     public static let secretFileName = ".secret"
 

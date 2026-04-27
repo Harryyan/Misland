@@ -19,7 +19,7 @@ import CoreServices
 /// - `~/.gemini`
 /// - `~/.config/gemini`
 /// - `~/.config/google/gemini`
-/// Override via env var `MIOMINI_GEMINI_DIR=/explicit/path`.
+/// Override via env var `MISLAND_GEMINI_DIR=/explicit/path`.
 public final class GeminiActivityWatcher: @unchecked Sendable {
     public typealias Ingest = (_ payload: [String: Any], _ nonce: String) -> Void
 
@@ -42,7 +42,7 @@ public final class GeminiActivityWatcher: @unchecked Sendable {
         activityWindow: TimeInterval = 5,
         idleAfter: TimeInterval = 10,
         fsEventLatency: CFTimeInterval = 1.0,
-        queue: DispatchQueue = DispatchQueue(label: "chat.mio.miomini.gemini"),
+        queue: DispatchQueue = DispatchQueue(label: "chat.mio.misland.gemini"),
         ingest: @escaping Ingest
     ) {
         self.watchPaths = watchPaths ?? GeminiActivityWatcher.defaultPaths()
@@ -56,7 +56,7 @@ public final class GeminiActivityWatcher: @unchecked Sendable {
     deinit { stop() }
 
     public static func defaultPaths() -> [String] {
-        if let override = ProcessInfo.processInfo.environment["MIOMINI_GEMINI_DIR"], !override.isEmpty {
+        if let override = ProcessInfo.processInfo.environment["MISLAND_GEMINI_DIR"], !override.isEmpty {
             return [override]
         }
         let home = NSHomeDirectory()
@@ -77,7 +77,7 @@ public final class GeminiActivityWatcher: @unchecked Sendable {
         guard !paths.isEmpty else {
             // No Gemini directories present — nothing to watch. Fail silently
             // (harmless: user simply doesn't run Gemini, or their layout is
-            // different and they need to set MIOMINI_GEMINI_DIR).
+            // different and they need to set MISLAND_GEMINI_DIR).
             return
         }
 

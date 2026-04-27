@@ -1,5 +1,5 @@
 import XCTest
-@testable import MioMiniCore
+@testable import MislandCore
 
 final class ArgSanitizerTests: XCTestCase {
     func testPlainTextUntouched() {

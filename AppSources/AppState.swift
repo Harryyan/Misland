@@ -1,22 +1,22 @@
 import Foundation
 import SwiftUI
-import MioMiniCore
+import MislandCore
 
-/// Bridges `MioMiniCore.MioMiniRuntime` into a SwiftUI ObservableObject.
+/// Bridges `MislandCore.MislandRuntime` into a SwiftUI ObservableObject.
 /// Owns runtime lifecycle for the app's lifetime.
 @MainActor
 final class AppState: ObservableObject {
     @Published private(set) var session: SessionState = .init()
     @Published private(set) var startupError: String?
     @Published var soundMuted: Bool {
-        didSet { UserDefaults.standard.set(soundMuted, forKey: "miomini.sound.muted") }
+        didSet { UserDefaults.standard.set(soundMuted, forKey: "misland.sound.muted") }
     }
     @Published var selectedBuddy: BuddySpecies {
-        didSet { UserDefaults.standard.set(selectedBuddy.rawValue, forKey: "miomini.buddy") }
+        didSet { UserDefaults.standard.set(selectedBuddy.rawValue, forKey: "misland.buddy") }
     }
     @Published private var enabledSounds: Set<String>
 
-    private var runtime: MioMiniRuntime?
+    private var runtime: MislandRuntime?
     private var dispose: (() -> Void)?
 
     init() {
@@ -24,10 +24,10 @@ final class AppState: ObservableObject {
         validateAllBuddyArt()
         #endif
         // Restore persisted prefs.
-        self.soundMuted = UserDefaults.standard.bool(forKey: "miomini.sound.muted")
-        let savedBuddy = UserDefaults.standard.string(forKey: "miomini.buddy") ?? BuddySpecies.cat.rawValue
+        self.soundMuted = UserDefaults.standard.bool(forKey: "misland.sound.muted")
+        let savedBuddy = UserDefaults.standard.string(forKey: "misland.buddy") ?? BuddySpecies.cat.rawValue
         self.selectedBuddy = BuddySpecies(rawValue: savedBuddy) ?? .cat
-        if let saved = UserDefaults.standard.array(forKey: "miomini.sound.events") as? [String] {
+        if let saved = UserDefaults.standard.array(forKey: "misland.sound.events") as? [String] {
             self.enabledSounds = Set(saved)
         } else {
             // Default: all events on.
@@ -35,7 +35,7 @@ final class AppState: ObservableObject {
         }
 
         do {
-            let rt = try MioMiniRuntime()
+            let rt = try MislandRuntime()
             try rt.start()
             self.runtime = rt
             // Observer fires on whatever thread ingest runs on (the socket
@@ -92,7 +92,7 @@ final class AppState: ObservableObject {
             set: { newValue in
                 if newValue { self.enabledSounds.insert(event.rawValue) }
                 else        { self.enabledSounds.remove(event.rawValue) }
-                UserDefaults.standard.set(Array(self.enabledSounds), forKey: "miomini.sound.events")
+                UserDefaults.standard.set(Array(self.enabledSounds), forKey: "misland.sound.events")
             }
         )
     }

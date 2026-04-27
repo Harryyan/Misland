@@ -32,7 +32,7 @@ public final class HookSocketServer: @unchecked Sendable {
     /// Per-connection serial work queue. Accept events and per-client work
     /// are dispatched here in FIFO order, so SessionStore observes events
     /// in the same order Claude Code emitted them.
-    private let workQueue = DispatchQueue(label: "chat.mio.miomini.socket")
+    private let workQueue = DispatchQueue(label: "chat.mio.misland.socket")
 
     public init(
         key: HMACKey,

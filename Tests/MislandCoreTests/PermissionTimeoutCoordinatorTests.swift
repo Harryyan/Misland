@@ -1,5 +1,5 @@
 import XCTest
-@testable import MioMiniCore
+@testable import MislandCore
 
 final class PermissionTimeoutCoordinatorTests: XCTestCase {
     /// Uses the shortest possible timeout (50 ms) so the suite stays fast.

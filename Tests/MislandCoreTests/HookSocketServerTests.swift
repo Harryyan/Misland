@@ -1,6 +1,6 @@
 import XCTest
 import Darwin
-@testable import MioMiniCore
+@testable import MislandCore
 import CryptoKit
 
 /// End-to-end tests that drive a real AF_UNIX socket between an in-process
@@ -21,7 +21,7 @@ final class HookSocketServerTests: XCTestCase {
         // for the socket; the support-dir sandbox stays under tmpdir.
         let shortID = String(UUID().uuidString.prefix(8))
         sandboxRoot = URL(fileURLWithPath: NSTemporaryDirectory())
-            .appendingPathComponent("MioMiniSrvTests-\(shortID)", isDirectory: true)
+            .appendingPathComponent("MislandSrvTests-\(shortID)", isDirectory: true)
         SecurityPaths.overrideRoot = sandboxRoot
         socketPath = "/tmp/mm-\(shortID).sock"
         key = HMACKey(raw: SymmetricKey(size: .bits256))

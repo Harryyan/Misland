@@ -1,4 +1,4 @@
-name: MioMini
+name: Misland
 options:
   bundleIdPrefix: chat.mio
   deploymentTarget:
@@ -6,11 +6,11 @@ options:
   createIntermediateGroups: true
 
 packages:
-  MioMiniCore:
+  MislandCore:
     path: .
 
 targets:
-  MioMini:
+  Misland:
     type: application
     platform: macOS
     sources:
@@ -35,7 +35,7 @@ targets:
         NSSupportsSuddenTermination: false
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: chat.mio.miomini
+        PRODUCT_BUNDLE_IDENTIFIER: chat.mio.misland
         PRODUCT_NAME: "Misland"
         MARKETING_VERSION: "0.1.0"
         CURRENT_PROJECT_VERSION: "1"
@@ -48,10 +48,10 @@ targets:
         ENABLE_USER_SCRIPT_SANDBOXING: NO
         SWIFT_STRICT_CONCURRENCY: minimal
     dependencies:
-      - package: MioMiniCore
-        product: MioMiniCore
+      - package: MislandCore
+        product: MislandCore
     postBuildScripts:
-      - name: Embed miomini-hook
+      - name: Embed misland-hook
         script: |
           "$PROJECT_DIR/scripts/build-hook.sh"
         runOnlyWhenInstalling: false

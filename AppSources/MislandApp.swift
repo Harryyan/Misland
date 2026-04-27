@@ -1,5 +1,5 @@
 import SwiftUI
-import MioMiniCore
+import MislandCore
 
 @main
 struct MislandApp: App {

@@ -1,5 +1,5 @@
 import XCTest
-@testable import MioMiniCore
+@testable import MislandCore
 
 final class GeminiActivityWatcherTests: XCTestCase {
     private final class Recorder: @unchecked Sendable {
@@ -32,7 +32,7 @@ final class GeminiActivityWatcherTests: XCTestCase {
     override func setUp() {
         super.setUp()
         sandbox = URL(fileURLWithPath: NSTemporaryDirectory())
-            .appendingPathComponent("MioMiniGemini-\(UUID().uuidString.prefix(8))")
+            .appendingPathComponent("MislandGemini-\(UUID().uuidString.prefix(8))")
         try? FileManager.default.createDirectory(at: sandbox, withIntermediateDirectories: true)
     }
 
@@ -150,8 +150,8 @@ final class GeminiActivityWatcherTests: XCTestCase {
     }
 
     func testEnvVarOverride() {
-        setenv("MIOMINI_GEMINI_DIR", "/some/explicit/path", 1)
-        defer { unsetenv("MIOMINI_GEMINI_DIR") }
+        setenv("MISLAND_GEMINI_DIR", "/some/explicit/path", 1)
+        defer { unsetenv("MISLAND_GEMINI_DIR") }
         XCTAssertEqual(GeminiActivityWatcher.defaultPaths(), ["/some/explicit/path"])
     }
 }

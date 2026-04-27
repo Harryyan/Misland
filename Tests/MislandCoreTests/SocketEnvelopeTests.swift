@@ -1,5 +1,5 @@
 import XCTest
-@testable import MioMiniCore
+@testable import MislandCore
 import CryptoKit
 
 final class SocketEnvelopeTests: XCTestCase {
@@ -9,7 +9,7 @@ final class SocketEnvelopeTests: XCTestCase {
     override func setUp() {
         super.setUp()
         sandboxRoot = URL(fileURLWithPath: NSTemporaryDirectory())
-            .appendingPathComponent("MioMiniTests-\(UUID().uuidString)", isDirectory: true)
+            .appendingPathComponent("MislandTests-\(UUID().uuidString)", isDirectory: true)
         SecurityPaths.overrideRoot = sandboxRoot
         key = HMACKey(raw: SymmetricKey(size: .bits256))
     }

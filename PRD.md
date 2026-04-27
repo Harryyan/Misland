@@ -1,4 +1,4 @@
-# MioMini — PRD v0.1
+# Misland — PRD v0.1
 
 A macOS notch overlay for AI coding agent state. Claude Code: full control. Gemini CLI: read-only. Security-first. Single user, single machine.
 
@@ -30,13 +30,13 @@ Decisions locked 2026-04-27:
 Claude Code         Gemini CLI
    │                  │
    ▼ stdin (hook)     ▼ FSEvents on logs
-miomini-hook (Swift CLI)   GeminiWatcher (in-app)
+misland-hook (Swift CLI)   GeminiWatcher (in-app)
    │
    ▼ HMAC-signed line over Unix socket
-   ~/Library/Application Support/MioMini/control.sock  (mode 0600)
+   ~/Library/Application Support/Misland/control.sock  (mode 0600)
    │
    ▼
-MioMini.app (SwiftUI)
+Misland.app (SwiftUI)
    ├─ NotchWindow
    ├─ SessionStore (single-session state machine)
    ├─ SoundPlayer (AVFoundation)
@@ -55,7 +55,7 @@ Single-line JSON, newline-delimited:
 
 ### Key management
 
-- One 256-bit key per install at `~/Library/Application Support/MioMini/.secret`
+- One 256-bit key per install at `~/Library/Application Support/Misland/.secret`
 - File mode 0600 enforced on read; refuse to load if any group/other bits are set
 - `Settings → Reset Pairing` regenerates and forces hook re-install
 
@@ -63,7 +63,7 @@ Single-line JSON, newline-delimited:
 
 | ID | Requirement | How verified |
 |---|---|---|
-| SEC-1 | Socket under `~/Library/Application Support/MioMini/`, mode 0600 | `ls -l` |
+| SEC-1 | Socket under `~/Library/Application Support/Misland/`, mode 0600 | `ls -l` |
 | SEC-2 | All messages HMAC-signed; per-install random key in `.secret` (mode 0600) | Tamper test in CI |
 | SEC-3 | Developer ID signed + Notarized; **no** auto-copy of self to `/Applications` | `codesign --verify` |
 | SEC-4 | Hook install merges into `~/.claude/settings.json`, never overwrites | Round-trip test |
@@ -79,7 +79,7 @@ Single-line JSON, newline-delimited:
 ```bash
 swift build
 swift test
-.build/debug/miomini-hook < /path/to/sample-hook-event.json
+.build/debug/misland-hook < /path/to/sample-hook-event.json
 ```
 
 ## Milestones

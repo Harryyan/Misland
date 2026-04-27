@@ -1,5 +1,5 @@
 import SwiftUI
-import MioMiniCore
+import MislandCore
 
 /// SwiftUI content of the floating notch overlay.
 ///

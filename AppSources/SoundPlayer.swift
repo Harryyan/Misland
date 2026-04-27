@@ -1,5 +1,5 @@
 import AppKit
-import MioMiniCore
+import MislandCore
 
 /// Plays a stock macOS system sound on key state transitions. We use NSSound
 /// rather than bundling .wav assets so v1 ships with no audio files. The

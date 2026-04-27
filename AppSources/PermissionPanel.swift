@@ -1,5 +1,5 @@
 import SwiftUI
-import MioMiniCore
+import MislandCore
 
 /// Shown when `SessionStore` has a pending permission request. Args are run
 /// through `ArgSanitizer.sanitize()` (PRD SEC-6) before display so ANSI escapes

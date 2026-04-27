@@ -269,13 +269,13 @@
         }
       }
     },
-    "Installation merges entries into ~/.claude/settings.json without touching your existing hooks. Uninstall removes only MioMini's entries." : {
+    "Installation merges entries into ~/.claude/settings.json without touching your existing hooks. Uninstall removes only Misland's entries." : {
       "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "安装时会合并条目到 ~/.claude/settings.json，不会动你已有的钩子。卸载时只移除 MioMini 自己的条目。"
+            "value" : "安装时会合并条目到 ~/.claude/settings.json，不会动你已有的钩子。卸载时只移除 Misland 自己的条目。"
           }
         }
       }
@@ -295,13 +295,13 @@
         }
       }
     },
-    "MioMini couldn't start" : {
+    "Misland couldn't start" : {
       "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "MioMini 启动失败"
+            "value" : "Misland 启动失败"
           }
         }
       }
@@ -409,13 +409,13 @@
         }
       }
     },
-    "Quit MioMini" : {
+    "Quit Misland" : {
       "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "退出 MioMini"
+            "value" : "退出 Misland"
           }
         }
       }

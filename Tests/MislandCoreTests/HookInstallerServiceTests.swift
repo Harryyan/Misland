@@ -1,15 +1,15 @@
 import XCTest
-@testable import MioMiniCore
+@testable import MislandCore
 
 final class HookInstallerServiceTests: XCTestCase {
     private var sandboxRoot: URL!
     private var settingsPath: String!
-    private let bridgePath = "/Applications/MioMini.app/Contents/MacOS/miomini-hook"
+    private let bridgePath = "/Applications/Misland.app/Contents/MacOS/misland-hook"
 
     override func setUp() {
         super.setUp()
         sandboxRoot = URL(fileURLWithPath: NSTemporaryDirectory())
-            .appendingPathComponent("MioMiniInstSvc-\(UUID().uuidString)", isDirectory: true)
+            .appendingPathComponent("MislandInstSvc-\(UUID().uuidString)", isDirectory: true)
         try? FileManager.default.createDirectory(at: sandboxRoot, withIntermediateDirectories: true)
         settingsPath = sandboxRoot.appendingPathComponent(".claude/settings.json").path
     }

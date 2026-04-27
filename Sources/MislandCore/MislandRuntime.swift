@@ -5,7 +5,7 @@ import Foundation
 ///
 /// ```
 ///                 ┌───────────────────────────────────┐
-///                 │  MioMiniRuntime                   │
+///                 │  MislandRuntime                   │
 ///                 │   ├─ HMACKey            (loadOrCreate) │
 ///                 │   ├─ SessionStore                 │
 ///                 │   ├─ HookSocketServer             │
@@ -16,7 +16,7 @@ import Foundation
 ///
 /// The runtime owns lifecycle. UI subscribes to `store.observe(...)` for state
 /// updates and calls `respond(...)` to act on user clicks.
-public final class MioMiniRuntime {
+public final class MislandRuntime {
     public let key: HMACKey
     public let store: SessionStore
     public let server: HookSocketServer
@@ -80,8 +80,8 @@ public final class MioMiniRuntime {
     }
 
     /// Returns the disk path the bridge binary should be installed at when we
-    /// run from a `Mio Mini.app` bundle. Used by `HookInstallerService.install(...)`.
+    /// run from a `Misland.app` bundle. Used by `HookInstallerService.install(...)`.
     public static func bridgePathForAppBundle(at bundleURL: URL) -> String {
-        bundleURL.appendingPathComponent("Contents/MacOS/miomini-hook").path
+        bundleURL.appendingPathComponent("Contents/MacOS/misland-hook").path
     }
 }

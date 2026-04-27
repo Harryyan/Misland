@@ -1,5 +1,5 @@
 import SwiftUI
-import MioMiniCore
+import MislandCore
 
 struct SettingsView: View {
     @EnvironmentObject private var state: AppState
@@ -27,7 +27,7 @@ private struct HookSettingsView: View {
 
     private var bridgePath: String {
         Bundle.main.bundleURL
-            .appendingPathComponent("Contents/MacOS/miomini-hook")
+            .appendingPathComponent("Contents/MacOS/misland-hook")
             .path
     }
 

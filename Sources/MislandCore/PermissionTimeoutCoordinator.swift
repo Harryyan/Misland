@@ -33,7 +33,7 @@ public final class PermissionTimeoutCoordinator: @unchecked Sendable {
         timeout: TimeInterval = 30,
         store: SessionStore,
         respond: @escaping Responder,
-        queue: DispatchQueue = DispatchQueue(label: "chat.mio.miomini.timeout")
+        queue: DispatchQueue = DispatchQueue(label: "chat.mio.misland.timeout")
     ) {
         precondition(timeout > 0)
         self.timeout = timeout

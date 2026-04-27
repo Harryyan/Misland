@@ -1,8 +1,8 @@
 import Foundation
-import MioMiniCore
+import MislandCore
 import Darwin
 
-// miomini-hook
+// misland-hook
 //
 // Reads a Claude Code hook event JSON from stdin, signs it with the per-install
 // HMAC key, and writes the envelope to the control socket. For PermissionRequest
@@ -54,7 +54,7 @@ do {
 let isPermission = (payload["status"] as? String) == SessionStatus.waitingForApproval.rawValue
 
 // 5. Connect to the socket server. If unavailable, exit silently — fail-open-to-CC.
-let socketPath = ProcessInfo.processInfo.environment["MIOMINI_SOCKET_PATH"] ?? SecurityPaths.socketPath
+let socketPath = ProcessInfo.processInfo.environment["MISLAND_SOCKET_PATH"] ?? SecurityPaths.socketPath
 
 let fd: Int32
 do {
@@ -121,7 +121,7 @@ case "deny":
             "hookEventName": "PermissionRequest",
             "decision": [
                 "behavior": "deny",
-                "message": reason.isEmpty ? "Denied by user via MioMini" : reason,
+                "message": reason.isEmpty ? "Denied by user via Misland" : reason,
             ],
         ]
     ]

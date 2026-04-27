@@ -44,7 +44,7 @@ Tool: Bash
 
 | Concern | What we do |
 |---|---|
-| Local IPC | AF_UNIX socket at `~/Library/Application Support/MioMini/`, mode 0600 + per-install random HMAC key, per-message HMAC-SHA256 + nonce + freshness, peer UID check |
+| Local IPC | AF_UNIX socket at `~/Library/Application Support/Misland/`, mode 0600 + per-install random HMAC key, per-message HMAC-SHA256 + nonce + freshness, peer UID check |
 | Replay attacks | TTL nonce cache; same envelope can't fire twice |
 | ANSI / control chars in tool args | Stripped before display (tool args could otherwise hijack terminal-aware text views) |
 | Stale prompts | Server auto-denies after 30 s if you haven't clicked anything |
@@ -52,9 +52,9 @@ Tool: Bash
 
 Full threat model in [PRD.md](PRD.md) §6.
 
-> **Note on internal module naming:** the Swift package is called `MioMiniCore`,
-> the bridge binary `miomini-hook`, and the support directory
-> `~/Library/Application Support/MioMini/`. These are internal codenames left
+> **Note on internal module naming:** the Swift package is called `MislandCore`,
+> the bridge binary `misland-hook`, and the support directory
+> `~/Library/Application Support/Misland/`. These are internal codenames left
 > over from the project's working title and are kept stable for backwards
 > compatibility with already-paired hook installs. The user-facing app and
 > repo are named **Misland**.
@@ -81,7 +81,7 @@ Cmd+R in Xcode to launch. The menu bar gets a status icon. Open **Settings → H
    - 🟠 orange — needs your approval (with the panel + 30 s timer)
    - 🟢 green — ready / done
 
-Gemini CLI: just use it. If your data dir is one of `~/.gemini`, `~/.config/gemini`, `~/.config/google/gemini`, Misland will pick it up. Otherwise set `MIOMINI_GEMINI_DIR=/your/path` before launching the app.
+Gemini CLI: just use it. If your data dir is one of `~/.gemini`, `~/.config/gemini`, `~/.config/google/gemini`, Misland will pick it up. Otherwise set `MISLAND_GEMINI_DIR=/your/path` before launching the app.
 
 ## Architecture
 
@@ -89,7 +89,7 @@ Gemini CLI: just use it. If your data dir is one of `~/.gemini`, `~/.config/gemi
 Claude Code         Gemini CLI
    │                  │
    ▼ stdin (hook)     ▼ FSEvents on data dir
-miomini-hook (Swift CLI)   GeminiActivityWatcher (in-app)
+misland-hook (Swift CLI)   GeminiActivityWatcher (in-app)
    │
    ▼ HMAC-signed line over ~/Library/.../control.sock (mode 0600)
    │
@@ -101,7 +101,7 @@ Misland.app
    └─ SwiftUI MenuBarExtra + Settings WindowGroup
 ```
 
-`MioMiniCore` (SwiftPM library) holds all business logic — Foundation + CryptoKit + Darwin POSIX, no AppKit. The bridge CLI links only Core (~1 MB binary, <30 ms cold start). The app links Core + AppKit/SwiftUI.
+`MislandCore` (SwiftPM library) holds all business logic — Foundation + CryptoKit + Darwin POSIX, no AppKit. The bridge CLI links only Core (~1 MB binary, <30 ms cold start). The app links Core + AppKit/SwiftUI.
 
 ## Development
 
@@ -109,7 +109,7 @@ Misland.app
 swift test           # 95 unit + integration tests, ~4 s
 swift build          # bridge CLI only
 xcodegen generate    # regenerate Xcode project from project.yml
-xcodebuild -scheme MioMini build   # full app
+xcodebuild -scheme Misland build   # full app
 ```
 
 ## Roadmap
