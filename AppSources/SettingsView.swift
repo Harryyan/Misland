@@ -86,7 +86,7 @@ private struct HookSettingsView: View {
                 }
             }
             Section("Notes") {
-                Text("Installation merges entries into ~/.claude/settings.json without touching your existing hooks. Uninstall removes only MioMini's entries.")
+                Text("Installation merges entries into ~/.claude/settings.json without touching your existing hooks. Uninstall removes only Misland's entries.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -166,7 +166,7 @@ private struct BuddyTile: View {
 private struct AboutView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("MioMini").font(.title2).bold()
+            Text("Misland").font(.title2).bold()
             Text("v0.1.0 — privacy-first Claude Code state in your menu bar")
                 .font(.caption)
                 .foregroundStyle(.secondary)

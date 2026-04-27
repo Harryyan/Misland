@@ -20,8 +20,8 @@ targets:
     info:
       path: AppSources/Info.plist
       properties:
-        CFBundleDisplayName: Mio Mini
-        CFBundleName: MioMini
+        CFBundleDisplayName: Misland
+        CFBundleName: Misland
         CFBundleShortVersionString: "0.1.0"
         CFBundleVersion: "1"
         CFBundleDevelopmentRegion: en
@@ -36,7 +36,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: chat.mio.miomini
-        PRODUCT_NAME: "Mio Mini"
+        PRODUCT_NAME: "Misland"
         MARKETING_VERSION: "0.1.0"
         CURRENT_PROJECT_VERSION: "1"
         SWIFT_VERSION: "5.9"

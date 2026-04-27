@@ -2,23 +2,22 @@ import SwiftUI
 import MioMiniCore
 
 @main
-struct MioMiniApp: App {
-    @StateObject private var appState = AppState()
+struct MislandApp: App {
+    @NSApplicationDelegateAdaptor(MislandAppDelegate.self) private var appDelegate
 
     var body: some Scene {
-        MenuBarExtra {
-            MenuBarContent()
-                .environmentObject(appState)
-        } label: {
-            // Status dot in the menu bar.
-            Image(systemName: appState.session.status.menuBarIconName)
-                .foregroundStyle(appState.session.status.color)
-        }
-        .menuBarExtraStyle(.window)
-
-        Window("MioMini Settings", id: "settings") {
+        // The notch panel itself isn't a SwiftUI Scene — it's an NSPanel
+        // owned by MislandAppDelegate (created on applicationDidFinishLaunching).
+        // Only declare scenes here that need the standard SwiftUI window
+        // pipeline: the Settings window for Cmd+, / right-click access.
+        Settings {
             SettingsView()
-                .environmentObject(appState)
+                .environmentObject(appDelegate.appState)
+        }
+
+        Window("Misland Settings", id: "settings") {
+            SettingsView()
+                .environmentObject(appDelegate.appState)
         }
         .windowResizability(.contentSize)
         .defaultPosition(.center)
