@@ -63,10 +63,12 @@ struct NotchGeometry {
     /// Frame for the expanded panel — wider than collapsed so session-row
     /// content has breathing room, and grows downward to host the drawer.
     func expandedFrame(expansionWidth: CGFloat = defaultExpansionWidth) -> NSRect {
-        // Widen significantly when expanded — collapsed wings are 120pt each,
-        // expanded form needs ~200pt per side for project name + tool + badge
-        // + elapsed time without truncating.
-        let widerExpansion = max(expansionWidth, 380)
+        // Two visual costs eat width: the inward top-corner curve (tr=18pt)
+        // pulls the visible shape in by tr on each side, and the drawer's
+        // horizontal padding (28pt) pulls content in further. Total margin
+        // each side ≈ 46pt × 2 = 92pt of "lost" width before any content
+        // shows. Make the panel generous so rows don't feel cramped.
+        let widerExpansion = max(expansionWidth, 480)
         let totalWidth = notchWidth + widerExpansion
         let originX = screen.frame.midX - totalWidth / 2
         let totalHeight = notchHeight + Self.expandedDrawerHeight

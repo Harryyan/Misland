@@ -146,9 +146,12 @@ private struct SessionListDrawer: View {
             header
             sessions
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 6)
-        .padding(.bottom, 12)
+        // Horizontal padding must exceed NotchShape.topCornerRadius (18) so
+        // text and the gear icon don't bleed past the visible black region.
+        // 28pt gives 10pt of breathing room beyond the curve inset.
+        .padding(.horizontal, 28)
+        .padding(.top, 10)
+        .padding(.bottom, 14)
     }
 
     private var header: some View {
