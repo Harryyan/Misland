@@ -1,63 +1,103 @@
 import Foundation
 
-/// In-memory state of the single most-active session (v1 spec).
+/// In-memory state for **all** Claude/Gemini sessions known to the runtime.
 ///
 /// SessionStore is the consumer end of the pipeline:
 /// `bridge → socket → server.verify → SessionStore.ingest → state`.
 ///
+/// Each Claude Code (or Gemini activity stream) gets a slot keyed by its
+/// `session_id`. The store also computes an `active` session — the one to
+/// surface in the collapsed notch bar — using these tiebreakers, in order:
+///   1. any session with a pending permission (most pressing)
+///   2. the most recently updated session
+///
 /// Implemented as a sync class (NSLock-protected) rather than an actor so the
 /// socket server can ingest from its sync POSIX handler thread without an
-/// actor-bridging Task. UI subscribers (W3) get notified through `observe()`
+/// actor-bridging Task. UI subscribers get notified through `observe()`
 /// callbacks fired on the same thread that calls `ingest`.
 public final class SessionStore: @unchecked Sendable {
     public typealias Observer = (SessionState) -> Void
 
     private let lock = NSLock()
-    private var _state: SessionState
+    private var sessionsByID: [String: SessionState] = [:]
     private var observers: [UUID: Observer] = [:]
 
     public init(initial: SessionState = .init()) {
-        _state = initial
+        if let id = initial.sessionId {
+            sessionsByID[id] = initial
+        }
     }
 
-    public var state: SessionState {
+    // MARK: - Public state accessors
+
+    /// All known sessions, sorted most-recent first.
+    public var sessions: [SessionState] {
         lock.lock(); defer { lock.unlock() }
-        return _state
+        return sortedLocked()
     }
 
-    public func snapshot() -> SessionState {
-        state
+    /// The session to surface in the collapsed bar:
+    /// pending permission > most recently updated > nil.
+    public var active: SessionState? {
+        lock.lock(); defer { lock.unlock() }
+        return computeActiveLocked()
     }
+
+    /// Backwards-compat: returns the active session, or an empty placeholder.
+    /// Existing tests pre-multi-session can call this; new code should prefer
+    /// `active` (optional) or `sessions` (collection).
+    public func snapshot() -> SessionState {
+        active ?? SessionState()
+    }
+
+    /// Test-friendly alias of `snapshot()`.
+    public var state: SessionState { snapshot() }
+
+    // MARK: - Ingest
 
     /// Apply a normalized payload (the same dict the bridge sends through the
     /// socket envelope's `payload` field). The envelope's nonce is captured so
     /// the UI can later route a permission decision back through the socket
     /// addressed at this exact request.
     ///
-    /// Source priority: a `gemini_cli` payload is read-only and must NEVER
-    /// clobber a Claude pending permission. If a permission is already pending,
-    /// gemini ingests are dropped on the floor.
+    /// Multi-session semantics: each unique `session_id` gets its own slot;
+    /// ingests update only their own slot — no cross-session clobbering.
+    ///
+    /// Source priority preserved per-session: a `gemini_cli` payload that
+    /// arrives at a session whose existing entry came from `claude_code`
+    /// AND has a pending permission is dropped (defense in depth — Gemini
+    /// shouldn't be able to clear Claude's prompt). In practice Gemini and
+    /// Claude use disjoint session IDs ("gemini-active" vs Claude's UUIDs)
+    /// so this branch rarely fires.
     @discardableResult
     public func ingest(payload: [String: Any], envelopeNonce: String, now: Date = Date()) -> SessionState {
-        let (newState, observersCopy) = withLock { () -> (SessionState, [Observer]) in
+        let (active, observersCopy) = withLock { () -> (SessionState, [Observer]) in
+            let id = (payload["session_id"] as? String) ?? "default"
             let source = (payload["source"] as? String) ?? "claude_code"
 
-            // Read-only sources never override a pending claude permission.
-            if source == "gemini_cli" && _state.pendingPermission != nil {
-                return (_state, [])
+            // Cross-source guard: refuse to let Gemini clobber a Claude
+            // session that is mid-permission. (Same-id Gemini ingest on a
+            // Claude session is unusual but possible if the user sets
+            // MISLAND_GEMINI_DIR pointing at a Claude data dir.)
+            if let existing = sessionsByID[id],
+               source == "gemini_cli",
+               existing.source == "claude_code",
+               existing.pendingPermission != nil {
+                return (computeActiveLocked() ?? SessionState(), [])
             }
 
+            var entry = sessionsByID[id] ?? SessionState(sessionId: id)
             let status = (payload["status"] as? String) ?? "unknown"
-            _state.status = SessionStatus(rawValue: status) ?? .unknown
-            _state.source = source
-            _state.sessionId = payload["session_id"] as? String ?? _state.sessionId
-            _state.cwd = payload["cwd"] as? String ?? _state.cwd
-            _state.tool = payload["tool"] as? String
-            _state.lastUpdate = now
+            entry.status = SessionStatus(rawValue: status) ?? .unknown
+            entry.source = source
+            entry.sessionId = id
+            entry.cwd = payload["cwd"] as? String ?? entry.cwd
+            entry.tool = payload["tool"] as? String
+            entry.lastUpdate = now
 
-            switch _state.status {
+            switch entry.status {
             case .waitingForApproval:
-                _state.pendingPermission = PendingPermission(
+                entry.pendingPermission = PendingPermission(
                     toolUseId: (payload["tool_use_id"] as? String) ?? "",
                     tool: (payload["tool"] as? String) ?? "",
                     toolInputJSON: payload["tool_input_json"] as? String,
@@ -65,30 +105,52 @@ public final class SessionStore: @unchecked Sendable {
                     receivedAt: now
                 )
             default:
-                // Any non-approval transition cancels a pending permission.
-                _state.pendingPermission = nil
+                // Any non-approval transition on this session cancels its pending.
+                entry.pendingPermission = nil
             }
-            return (_state, Array(observers.values))
+
+            sessionsByID[id] = entry
+            let active = computeActiveLocked() ?? entry
+            return (active, Array(observers.values))
         }
-        for cb in observersCopy { cb(newState) }
-        return newState
+        for cb in observersCopy { cb(active) }
+        return active
     }
 
-    /// Subscribe to state changes. The callback fires synchronously on whatever
-    /// thread called `ingest`. Returns a disposer that, when called, removes the
-    /// observer. The callback is also invoked once with the current snapshot
-    /// to give subscribers an immediate baseline.
+    // MARK: - Observation
+
+    /// Subscribe to state changes. The callback fires with the **active**
+    /// session whenever any session updates. For multi-session UI use
+    /// `sessions` directly inside the callback.
     public func observe(_ cb: @escaping Observer) -> () -> Void {
         let id = UUID()
         let snap: SessionState = withLock {
             observers[id] = cb
-            return _state
+            return computeActiveLocked() ?? SessionState()
         }
         cb(snap)
         return { [weak self] in
             guard let self else { return }
             _ = self.withLock { self.observers.removeValue(forKey: id) }
         }
+    }
+
+    // MARK: - Internals
+
+    private func computeActiveLocked() -> SessionState? {
+        // Pending permission takes priority; among those pick the oldest
+        // (FIFO — fairer than letting newer requests jump the queue).
+        if let pending = sessionsByID.values
+            .filter({ $0.pendingPermission != nil })
+            .min(by: { ($0.pendingPermission?.receivedAt ?? .distantFuture) <
+                       ($1.pendingPermission?.receivedAt ?? .distantFuture) }) {
+            return pending
+        }
+        return sessionsByID.values.max(by: { $0.lastUpdate < $1.lastUpdate })
+    }
+
+    private func sortedLocked() -> [SessionState] {
+        sessionsByID.values.sorted { $0.lastUpdate > $1.lastUpdate }
     }
 
     private func withLock<T>(_ body: () -> T) -> T {
