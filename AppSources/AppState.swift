@@ -7,6 +7,9 @@ import MislandCore
 @MainActor
 final class AppState: ObservableObject {
     @Published private(set) var session: SessionState = .init()
+    /// Sessions to surface in the expansion drawer. Filtered to non-idle/ended,
+    /// sorted most-recent-first. Empty → drawer stays collapsed.
+    @Published private(set) var displayableSessions: [SessionState] = []
     @Published private(set) var startupError: String?
     @Published var soundMuted: Bool {
         didSet { UserDefaults.standard.set(soundMuted, forKey: "misland.sound.muted") }
@@ -113,6 +116,13 @@ final class AppState: ObservableObject {
     private func applyStateUpdate(_ new: SessionState) {
         let prev = session
         session = new
+        if let runtime {
+            // Filter to "active" — anything but idle/ended/unknown.
+            // Sorted most-recent-first so the freshest task is on top.
+            displayableSessions = runtime.store.sessions
+                .filter { $0.status != .idle && $0.status != .ended && $0.status != .unknown }
+                .sorted { $0.lastUpdate > $1.lastUpdate }
+        }
         triggerSounds(prev: prev, new: new)
     }
 

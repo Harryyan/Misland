@@ -3,16 +3,10 @@ import MislandCore
 
 /// SwiftUI content of the floating notch overlay.
 ///
-/// Layout matches the MioIsland visual signature:
-/// - Bar is centered on the physical notch (panel sits at screen.midX).
-/// - Custom `NotchShape` gives the wings inward-curving top corners and
-///   outward-rounded bottom corners — the wings appear to grow out of the
-///   notch hardware itself.
-/// - Notch hardware sits in the middle of the bar's footprint; the bar's
-///   black background visually merges with the physical black notch.
-/// - Left wing: status dot · buddy · status text.
-/// - Right wing: agent badge · project name.
-/// - Permission pending → bar grows downward into a drawer with PermissionPanel.
+/// Two display modes:
+/// - **Idle / no active sessions** — bare bar around the notch, no drawer.
+/// - **Active** — bar + drawer below showing each tracked session row,
+///   PLUS the permission panel on top when a session has a pending request.
 struct NotchView: View {
     @EnvironmentObject private var state: AppState
     @Environment(\.openWindow) private var openWindow
@@ -28,14 +22,7 @@ struct NotchView: View {
             VStack(spacing: 0) {
                 topStrip
                     .frame(height: geometry.notchHeight)
-                if let pending = state.session.pendingPermission {
-                    PermissionPanel(pending: pending) { decision in
-                        state.decide(nonce: pending.envelopeNonce, decision: decision)
-                    }
-                    .colorScheme(.dark)
-                    .padding(.horizontal, 14)
-                    .padding(.bottom, 12)
-                }
+                drawer
             }
         }
         .contextMenu {
@@ -45,8 +32,7 @@ struct NotchView: View {
         }
     }
 
-    /// The always-visible strip wrapping the notch. Three columns:
-    /// left wing | notch reserve (where the hardware notch lives) | right wing.
+    /// The always-visible strip wrapping the notch.
     private var topStrip: some View {
         HStack(spacing: 0) {
             LeftWing()
@@ -55,6 +41,21 @@ struct NotchView: View {
                 .frame(width: geometry.notchWidth)
             RightWing()
                 .frame(maxWidth: .infinity)
+        }
+    }
+
+    /// Drawer content. Empty → drawer not even rendered (panel collapses).
+    @ViewBuilder
+    private var drawer: some View {
+        if let pending = state.session.pendingPermission {
+            PermissionPanel(pending: pending) { decision in
+                state.decide(nonce: pending.envelopeNonce, decision: decision)
+            }
+            .colorScheme(.dark)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+        } else if !state.displayableSessions.isEmpty {
+            SessionListDrawer()
         }
     }
 }
@@ -99,7 +100,7 @@ private struct RightWing: View {
     var body: some View {
         HStack(spacing: 6) {
             if let cwd = state.session.cwd {
-                Text(projectName(from: cwd))
+                Text(verbatim: projectName(from: cwd))
                     .font(.system(size: 11, weight: .regular, design: .monospaced))
                     .foregroundStyle(.white.opacity(0.7))
                     .lineLimit(1)
@@ -118,11 +119,170 @@ private struct RightWing: View {
     }
 }
 
+// MARK: - Session list drawer
+
+private struct SessionListDrawer: View {
+    @EnvironmentObject private var state: AppState
+    @Environment(\.openWindow) private var openWindow
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            header
+            sessions
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 6)
+        .padding(.bottom, 12)
+    }
+
+    private var header: some View {
+        HStack {
+            Text(verbatim: countLabel)
+                .font(.system(size: 13, weight: .regular, design: .rounded))
+                .foregroundStyle(.white.opacity(0.55))
+            Spacer()
+            Button {
+                openWindow(id: "settings")
+            } label: {
+                Image(systemName: "gearshape")
+                    .font(.system(size: 13, weight: .regular))
+                    .foregroundStyle(.white.opacity(0.55))
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    private var countLabel: String {
+        let n = state.displayableSessions.count
+        return n == 1 ? "1 session" : "\(n) sessions"
+    }
+
+    private var sessions: some View {
+        VStack(spacing: 6) {
+            ForEach(state.displayableSessions, id: \.sessionId) { session in
+                SessionRow(session: session)
+            }
+        }
+    }
+}
+
+private struct SessionRow: View {
+    @EnvironmentObject private var state: AppState
+    let session: SessionState
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 12) {
+            BuddyView(species: state.selectedBuddy)
+                .frame(width: 32, height: 32)
+                .background(Color.white.opacity(0.04), in: RoundedRectangle(cornerRadius: 6))
+
+            VStack(alignment: .leading, spacing: 2) {
+                titleLine
+                subtitleLine
+            }
+
+            Spacer(minLength: 4)
+
+            HStack(spacing: 8) {
+                if let source = session.source {
+                    AgentBadge(source: source)
+                }
+                ElapsedText(date: session.lastUpdate)
+                    .font(.system(size: 11, weight: .regular, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.5))
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(Color.white.opacity(0.04), in: RoundedRectangle(cornerRadius: 10))
+    }
+
+    private var titleLine: some View {
+        HStack(spacing: 6) {
+            Text(verbatim: projectLabel)
+                .font(.system(size: 14, weight: .semibold, design: .rounded))
+                .foregroundStyle(.white)
+                .lineLimit(1)
+            if let task = taskBlurb {
+                Text(verbatim: " · \(task)")
+                    .font(.system(size: 14, weight: .regular, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.7))
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+            }
+        }
+    }
+
+    private var subtitleLine: some View {
+        HStack(spacing: 4) {
+            Circle()
+                .fill(session.status.color)
+                .frame(width: 5, height: 5)
+            Text(verbatim: statusBlurb)
+                .font(.system(size: 11, design: .rounded))
+                .foregroundStyle(.white.opacity(0.55))
+                .lineLimit(1)
+        }
+    }
+
+    private var projectLabel: String {
+        if let cwd = session.cwd {
+            return (cwd as NSString).lastPathComponent
+        }
+        if let id = session.sessionId {
+            return "session \(id.prefix(6))"
+        }
+        return "—"
+    }
+
+    /// Top-line task blurb. We don't yet capture the user's prompt, so use
+    /// the current tool when running, or the human-readable status otherwise.
+    private var taskBlurb: String? {
+        if let tool = session.tool, !tool.isEmpty { return tool }
+        return nil
+    }
+
+    private var statusBlurb: String {
+        switch session.status {
+        case .idle:               return "idle"
+        case .processing:         return "processing"
+        case .runningTool:        return session.tool.map { "running \($0)" } ?? "running tool"
+        case .waitingForApproval: return "needs approval"
+        case .waitingForInput:    return "ready"
+        case .compacting:         return "compacting"
+        case .ended:              return "ended"
+        case .notification:       return "notification"
+        case .unknown:            return "unknown"
+        }
+    }
+}
+
+private struct ElapsedText: View {
+    let date: Date
+    @State private var now = Date()
+
+    var body: some View {
+        Text(verbatim: format(now.timeIntervalSince(date)))
+            .onReceive(Timer.publish(every: 30, on: .main, in: .common).autoconnect()) {
+                now = $0
+            }
+    }
+
+    private func format(_ secs: TimeInterval) -> String {
+        if secs < 60 { return "now" }
+        if secs < 3600 { return "\(Int(secs / 60))m" }
+        if secs < 86_400 { return "\(Int(secs / 3600))h" }
+        return "\(Int(secs / 86_400))d"
+    }
+}
+
+// MARK: - Agent badge (used in both wing and rows)
+
 struct AgentBadge: View {
     let source: String
 
     var body: some View {
-        Text(label)
+        Text(verbatim: label)
             .font(.system(size: 9, weight: .semibold, design: .rounded))
             .padding(.horizontal, 6)
             .padding(.vertical, 2)

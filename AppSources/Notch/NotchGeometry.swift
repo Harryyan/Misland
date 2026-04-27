@@ -15,8 +15,10 @@ import AppKit
 struct NotchGeometry {
     /// Default extra width (split equally between left and right wings).
     static let defaultExpansionWidth: CGFloat = 240
-    /// Drawer height when a permission is pending.
-    static let expandedDrawerHeight: CGFloat = 180
+    /// Drawer height when expanded — fits the permission panel OR a small
+    /// session list. Rows are ~52pt; this height comfortably shows ~3 rows
+    /// plus the "N sessions" header and padding. Beyond that the list scrolls.
+    static let expandedDrawerHeight: CGFloat = 260
     /// Top-corner radius of the bar — small inward curve at the wing tips.
     static let topCornerRadius: CGFloat = 8
     /// Bottom-corner radius of the bar — larger outward rounding.
@@ -55,12 +57,18 @@ struct NotchGeometry {
         return NSRect(x: originX, y: originY, width: totalWidth, height: notchHeight)
     }
 
-    /// Frame for the expanded panel (collapsed bar + downward drawer).
+    /// Frame for the expanded panel — wider than collapsed so session-row
+    /// content has breathing room, and grows downward to host the drawer.
     func expandedFrame(expansionWidth: CGFloat = defaultExpansionWidth) -> NSRect {
-        var f = collapsedFrame(expansionWidth: expansionWidth)
-        f.size.height += Self.expandedDrawerHeight
-        f.origin.y -= Self.expandedDrawerHeight
-        return f
+        // Widen significantly when expanded — collapsed wings are 120pt each,
+        // expanded form needs ~200pt per side for project name + tool + badge
+        // + elapsed time without truncating.
+        let widerExpansion = max(expansionWidth, 380)
+        let totalWidth = notchWidth + widerExpansion
+        let originX = screen.frame.midX - totalWidth / 2
+        let totalHeight = notchHeight + Self.expandedDrawerHeight
+        let originY = screen.frame.maxY - totalHeight
+        return NSRect(x: originX, y: originY, width: totalWidth, height: totalHeight)
     }
 
     static func bestScreen() -> NSScreen {

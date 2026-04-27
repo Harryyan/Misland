@@ -68,14 +68,18 @@ final class NotchPanelController {
     }
 
     private func observeState() {
-        // Drive expanded-vs-collapsed off pendingPermission. Combine's @Published
-        // stream gives us a clean handoff with main-thread delivery.
-        stateCancellable = appState.$session
-            .map { $0.pendingPermission != nil }
-            .removeDuplicates()
-            .sink { [weak self] hasPending in
-                self?.setExpanded(hasPending)
-            }
+        // Auto-expand whenever EITHER a permission is pending OR there is at
+        // least one displayable session (status != idle/ended/unknown).
+        // When everything goes idle the panel collapses back to the bare bar.
+        stateCancellable = Publishers.CombineLatest(
+            appState.$session.map { $0.pendingPermission != nil },
+            appState.$displayableSessions.map { !$0.isEmpty }
+        )
+        .map { hasPending, hasActive in hasPending || hasActive }
+        .removeDuplicates()
+        .sink { [weak self] expanded in
+            self?.setExpanded(expanded)
+        }
     }
 
     private func repositionForScreens() {
