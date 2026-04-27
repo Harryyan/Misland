@@ -1,0 +1,205 @@
+{
+  "sourceLanguage" : "en",
+  "version" : "1.0",
+  "strings" : {
+    "MioMini" : {
+      "comment" : "App name — do not translate",
+      "shouldTranslate" : false
+    },
+    "Settings…" : {
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "设置…" } }
+      }
+    },
+    "Quit" : {
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "退出" } }
+      }
+    },
+    "Quit MioMini" : {
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "退出 MioMini" } }
+      }
+    },
+    "MioMini couldn't start" : {
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "MioMini 启动失败" } }
+      }
+    },
+
+    "Hooks" : {
+      "comment" : "Settings tab",
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "钩子" } }
+      }
+    },
+    "Sounds" : {
+      "comment" : "Settings tab",
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "声音" } }
+      }
+    },
+    "Buddy" : {
+      "comment" : "Settings tab",
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "伙伴" } }
+      }
+    },
+    "About" : {
+      "comment" : "Settings tab",
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "关于" } }
+      }
+    },
+
+    "Claude Code hooks" : {
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "Claude Code 钩子" } }
+      }
+    },
+    "Status" : {
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "状态" } }
+      }
+    },
+    "Installed" : {
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "已安装" } }
+      }
+    },
+    "Not installed" : {
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "未安装" } }
+      }
+    },
+    "Bridge path" : {
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "桥接路径" } }
+      }
+    },
+    "Install hooks" : {
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "安装钩子" } }
+      }
+    },
+    "Re-install" : {
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "重新安装" } }
+      }
+    },
+    "Uninstall" : {
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "卸载" } }
+      }
+    },
+    "Notes" : {
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "说明" } }
+      }
+    },
+    "Installation merges entries into ~/.claude/settings.json without touching your existing hooks. Uninstall removes only MioMini's entries." : {
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "安装时会合并条目到 ~/.claude/settings.json，不会动你已有的钩子。卸载时只移除 MioMini 自己的条目。" } }
+      }
+    },
+
+    "Mute all sounds" : {
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "静音所有声音" } }
+      }
+    },
+    "Per-event sounds" : {
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "按事件设置" } }
+      }
+    },
+    "Test current event sounds" : {
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "试听已启用的事件" } }
+      }
+    },
+    "Session start" : {
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "会话开始" } }
+      }
+    },
+    "Approval needed" : {
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "需要审批" } }
+      }
+    },
+    "Approval granted" : {
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "已批准" } }
+      }
+    },
+    "Approval denied" : {
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "已拒绝" } }
+      }
+    },
+    "Session complete" : {
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "会话结束" } }
+      }
+    },
+
+    "Cat" :       { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "猫" } } } },
+    "Duck" :      { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "鸭子" } } } },
+    "Octopus" :   { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "章鱼" } } } },
+    "Fox" :       { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "狐狸" } } } },
+    "Ghost" :     { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "幽灵" } } } },
+    "Axolotl" :   { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "六角恐龙" } } } },
+    "Rabbit" :    { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "兔子" } } } },
+    "Capybara" :  { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "水豚" } } } },
+    "Dragon" :    { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "龙" } } } },
+
+    "Deny" : {
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "拒绝" } }
+      }
+    },
+    "Allow" : {
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "允许" } }
+      }
+    },
+
+    "idle" :              { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "空闲" } } } },
+    "processing" :        { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "处理中" } } } },
+    "running tool" :      { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "调用工具" } } } },
+    "needs approval" :    { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "待审批" } } } },
+    "ready" :             { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "就绪" } } } },
+    "compacting" :        { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "压缩上下文" } } } },
+    "ended" :             { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "已结束" } } } },
+    "notification" :      { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "通知" } } } },
+    "unknown" :           { "localizations" : { "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "未知" } } } },
+
+    "Tool: %@" : {
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "工具：%@" } }
+      }
+    },
+
+    "v0.1.0 — privacy-first Claude Code state in your menu bar" : {
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "v0.1.0 — 在菜单栏显示 Claude Code 状态，注重隐私" } }
+      }
+    },
+    "• Local only. Zero outbound network." : {
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "• 完全本地运行，零网络外发" } }
+      }
+    },
+    "• HMAC-signed control socket; mode 0600." : {
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "• 控制 socket 经 HMAC 签名，权限 0600" } }
+      }
+    },
+    "• Permission auto-deny after 30 s." : {
+      "localizations" : {
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "• 30 秒未响应自动拒绝" } }
+      }
+    }
+  }
+}

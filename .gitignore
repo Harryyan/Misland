@@ -1,0 +1,9 @@
+.DS_Store
+.build/
+.swiftpm/
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+DerivedData/
+Package.resolved
+# Xcode project is generated from project.yml — regenerate via `xcodegen`.
+MioMini.xcodeproj/
