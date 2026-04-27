@@ -83,4 +83,47 @@ final class MislandRuntimeTests: XCTestCase {
         try runtime.installer.install(bridgePath: "/test/path/misland-hook")
         XCTAssertTrue(runtime.installer.isInstalled(bridgePath: "/test/path/misland-hook"))
     }
+
+    /// End-to-end multi-session: two simulated bridges (different session_ids)
+    /// drive the same socket; SessionStore must track both as distinct entries
+    /// and pick the right "active" one.
+    func testMultipleClaudeSessionsTrackedSimultaneously() throws {
+        func send(payload: [String: Any]) throws {
+            let env = try SocketEnvelope.sign(payload: payload, key: runtime.key)
+            var line = try env.encode()
+            line.append(0x0a)
+            let fd = try UnixSocket.connectClient(path: socketPath, sendTimeout: 2, recvTimeout: 1)
+            defer { Darwin.close(fd) }
+            try UnixSocket.writeAll(fd: fd, data: line)
+        }
+
+        try send(payload: [
+            "status": "processing",
+            "session_id": "claude-A",
+            "cwd": "/Users/me/proj-A",
+            "source": "claude_code",
+        ])
+        try send(payload: [
+            "status": "running_tool",
+            "session_id": "claude-B",
+            "cwd": "/Users/me/proj-B",
+            "tool": "Bash",
+            "source": "claude_code",
+        ])
+
+        // Wait for ingest to settle (server is on a serial workQueue).
+        let deadline = Date().addingTimeInterval(2)
+        while Date() < deadline, runtime.store.sessions.count < 2 {
+            Thread.sleep(forTimeInterval: 0.02)
+        }
+
+        XCTAssertEqual(runtime.store.sessions.count, 2,
+                       "both Claude sessions should be tracked simultaneously")
+        let ids = Set(runtime.store.sessions.compactMap(\.sessionId))
+        XCTAssertEqual(ids, ["claude-A", "claude-B"])
+
+        // Active should be claude-B (most recently updated).
+        XCTAssertEqual(runtime.store.active?.sessionId, "claude-B")
+        XCTAssertEqual(runtime.store.active?.tool, "Bash")
+    }
 }
