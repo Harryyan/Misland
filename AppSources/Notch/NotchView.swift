@@ -3,13 +3,16 @@ import MislandCore
 
 /// SwiftUI content of the floating notch overlay.
 ///
-/// Three states:
-/// - **Collapsed** (default): wings around the notch show the active session
-///   only, with a `×N` badge if there are multiple sessions tracked.
-/// - **Manually expanded** (user tapped the bar): a session list drops down
-///   showing every Claude / Gemini session.
-/// - **Permission expanded** (a session has a pendingPermission): the
-///   PermissionPanel drops down. Takes priority over the manual list.
+/// Layout matches the MioIsland visual signature:
+/// - Bar is centered on the physical notch (panel sits at screen.midX).
+/// - Custom `NotchShape` gives the wings inward-curving top corners and
+///   outward-rounded bottom corners — the wings appear to grow out of the
+///   notch hardware itself.
+/// - Notch hardware sits in the middle of the bar's footprint; the bar's
+///   black background visually merges with the physical black notch.
+/// - Left wing: status dot · buddy · status text.
+/// - Right wing: agent badge · project name.
+/// - Permission pending → bar grows downward into a drawer with PermissionPanel.
 struct NotchView: View {
     @EnvironmentObject private var state: AppState
     @Environment(\.openWindow) private var openWindow
@@ -25,13 +28,14 @@ struct NotchView: View {
             VStack(spacing: 0) {
                 topStrip
                     .frame(height: geometry.notchHeight)
-                    .contentShape(Rectangle())   // make entire strip tappable
-                    .onTapGesture {
-                        if state.session.pendingPermission == nil {
-                            state.toggleManualExpansion()
-                        }
+                if let pending = state.session.pendingPermission {
+                    PermissionPanel(pending: pending) { decision in
+                        state.decide(nonce: pending.envelopeNonce, decision: decision)
                     }
-                drawerContent
+                    .colorScheme(.dark)
+                    .padding(.horizontal, 14)
+                    .padding(.bottom, 12)
+                }
             }
         }
         .contextMenu {
@@ -41,6 +45,8 @@ struct NotchView: View {
         }
     }
 
+    /// The always-visible strip wrapping the notch. Three columns:
+    /// left wing | notch reserve (where the hardware notch lives) | right wing.
     private var topStrip: some View {
         HStack(spacing: 0) {
             LeftWing()
@@ -49,22 +55,6 @@ struct NotchView: View {
                 .frame(width: geometry.notchWidth)
             RightWing()
                 .frame(maxWidth: .infinity)
-        }
-    }
-
-    @ViewBuilder
-    private var drawerContent: some View {
-        if let pending = state.session.pendingPermission {
-            PermissionPanel(pending: pending) { decision in
-                state.decide(nonce: pending.envelopeNonce, decision: decision)
-            }
-            .colorScheme(.dark)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
-        } else if state.isManuallyExpanded {
-            SessionList()
-                .padding(.horizontal, 14)
-                .padding(.vertical, 10)
         }
     }
 }
@@ -108,12 +98,8 @@ private struct RightWing: View {
 
     var body: some View {
         HStack(spacing: 6) {
-            if state.allSessions.count > 1 {
-                Text(verbatim: "×\(state.allSessions.count)")
-                    .font(.system(size: 11, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.85))
-            } else if let cwd = state.session.cwd {
-                Text(verbatim: projectName(from: cwd))
+            if let cwd = state.session.cwd {
+                Text(projectName(from: cwd))
                     .font(.system(size: 11, weight: .regular, design: .monospaced))
                     .foregroundStyle(.white.opacity(0.7))
                     .lineLimit(1)
@@ -131,65 +117,6 @@ private struct RightWing: View {
         (path as NSString).lastPathComponent
     }
 }
-
-// MARK: - Session list (manual expansion)
-
-private struct SessionList: View {
-    @EnvironmentObject private var state: AppState
-
-    var body: some View {
-        VStack(spacing: 6) {
-            ForEach(state.allSessions, id: \.sessionId) { session in
-                SessionRow(session: session)
-            }
-        }
-    }
-}
-
-private struct SessionRow: View {
-    let session: SessionState
-
-    var body: some View {
-        HStack(spacing: 8) {
-            Circle()
-                .fill(session.status.color)
-                .frame(width: 7, height: 7)
-            VStack(alignment: .leading, spacing: 1) {
-                Text(verbatim: projectLabel)
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(.white)
-                    .lineLimit(1)
-                Text(verbatim: statusLine)
-                    .font(.system(size: 10))
-                    .foregroundStyle(.white.opacity(0.6))
-                    .lineLimit(1)
-            }
-            Spacer(minLength: 4)
-            if let source = session.source {
-                AgentBadge(source: source)
-            }
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 5)
-        .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 6))
-    }
-
-    private var projectLabel: String {
-        if let cwd = session.cwd {
-            return (cwd as NSString).lastPathComponent
-        }
-        return session.sessionId.map { "session \($0.prefix(6))…" } ?? "—"
-    }
-
-    private var statusLine: String {
-        var parts: [String] = []
-        if let tool = session.tool { parts.append(tool) }
-        parts.append(session.status.rawValue.replacingOccurrences(of: "_", with: " "))
-        return parts.joined(separator: " · ")
-    }
-}
-
-// MARK: - Agent badge
 
 struct AgentBadge: View {
     let source: String

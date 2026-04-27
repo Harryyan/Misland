@@ -7,9 +7,7 @@ import MislandCore
 @MainActor
 final class AppState: ObservableObject {
     @Published private(set) var session: SessionState = .init()
-    @Published private(set) var allSessions: [SessionState] = []
     @Published private(set) var startupError: String?
-    @Published private(set) var isManuallyExpanded: Bool = false
     @Published var soundMuted: Bool {
         didSet { UserDefaults.standard.set(soundMuted, forKey: "misland.sound.muted") }
     }
@@ -115,22 +113,7 @@ final class AppState: ObservableObject {
     private func applyStateUpdate(_ new: SessionState) {
         let prev = session
         session = new
-        // Refresh full session list whenever any session changes — cheap;
-        // SessionStore.sessions is a snapshot copy of the dict values.
-        if let runtime { allSessions = runtime.store.sessions }
-        // A pending permission auto-collapses the manual session list so
-        // the user sees the approval drawer instead.
-        if new.pendingPermission != nil { isManuallyExpanded = false }
         triggerSounds(prev: prev, new: new)
-    }
-
-    func toggleManualExpansion() {
-        guard session.pendingPermission == nil else { return }
-        isManuallyExpanded.toggle()
-    }
-
-    func collapseManualExpansion() {
-        isManuallyExpanded = false
     }
 
     private func triggerSounds(prev: SessionState, new: SessionState) {

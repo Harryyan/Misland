@@ -68,18 +68,14 @@ final class NotchPanelController {
     }
 
     private func observeState() {
-        // Expand whenever EITHER the active session has a pending permission
-        // OR the user has manually tapped the bar. CombineLatest folds both
-        // @Published streams into one boolean.
-        stateCancellable = Publishers.CombineLatest(
-            appState.$session.map { $0.pendingPermission != nil },
-            appState.$isManuallyExpanded
-        )
-        .map { hasPending, manual in hasPending || manual }
-        .removeDuplicates()
-        .sink { [weak self] expanded in
-            self?.setExpanded(expanded)
-        }
+        // Drive expanded-vs-collapsed off pendingPermission. Combine's @Published
+        // stream gives us a clean handoff with main-thread delivery.
+        stateCancellable = appState.$session
+            .map { $0.pendingPermission != nil }
+            .removeDuplicates()
+            .sink { [weak self] hasPending in
+                self?.setExpanded(hasPending)
+            }
     }
 
     private func repositionForScreens() {
