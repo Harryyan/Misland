@@ -35,10 +35,10 @@ jobs:
           restore-keys: |
             spm-${{ runner.os }}-
 
-      - name: Swift build (Core + miomini-hook)
-        run: swift build --product miomini-hook
+      - name: Swift build (Core + misland-hook)
+        run: swift build --product misland-hook
 
-      - name: Swift test (95 unit + integration tests)
+      - name: Swift test (unit + integration)
         run: swift test --parallel
 
       # Pin xcodegen to a version that targets a project format the runner's
@@ -56,11 +56,11 @@ jobs:
       - name: Generate Xcode project
         run: xcodegen generate
 
-      - name: Build MioMini.app
+      - name: Build Misland.app
         run: >
           xcodebuild
-          -project MioMini.xcodeproj
-          -scheme MioMini
+          -project Misland.xcodeproj
+          -scheme Misland
           -configuration Debug
           -destination 'platform=macOS'
           CODE_SIGN_IDENTITY='-'
@@ -72,18 +72,18 @@ jobs:
       - name: Locate built bundle
         id: bundle
         run: |
-          APP="$(find ~/Library/Developer/Xcode/DerivedData/MioMini-* -name 'Mio Mini.app' -type d -maxdepth 5 2>/dev/null | head -1)"
-          if [ -z "$APP" ]; then echo "::error::No 'Mio Mini.app' produced by xcodebuild"; exit 1; fi
+          APP="$(find ~/Library/Developer/Xcode/DerivedData/Misland-* -name 'Misland.app' -type d -maxdepth 5 2>/dev/null | head -1)"
+          if [ -z "$APP" ]; then echo "::error::No 'Misland.app' produced by xcodebuild"; exit 1; fi
           echo "path=$APP" >> "$GITHUB_OUTPUT"
           echo "Found: $APP"
 
       - name: Verify bundle integrity
         run: codesign --verify --strict --verbose=2 "${{ steps.bundle.outputs.path }}"
 
-      - name: Verify miomini-hook embedded + fail-open smoke
+      - name: Verify misland-hook embedded + fail-open smoke
         run: |
-          BIN="${{ steps.bundle.outputs.path }}/Contents/MacOS/miomini-hook"
-          if [ ! -f "$BIN" ]; then echo "::error::miomini-hook missing from bundle"; exit 1; fi
+          BIN="${{ steps.bundle.outputs.path }}/Contents/MacOS/misland-hook"
+          if [ ! -f "$BIN" ]; then echo "::error::misland-hook missing from bundle"; exit 1; fi
           file "$BIN"
           echo '{"hook_event_name":"PreToolUse","cwd":"/tmp","tool_name":"Bash","tool_input":{"command":"ls"}}' | "$BIN"
 
