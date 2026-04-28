@@ -1,12 +1,13 @@
 # Misland
 
-A privacy-first macOS menu bar app that surfaces what Claude Code and Gemini CLI are doing — so you don't have to keep flipping back to the terminal.
+A privacy-first macOS notch overlay that surfaces what Claude Code and Gemini CLI are doing — so you don't have to keep flipping back to the terminal.
 
-> **Form factor (v0.1):** runs as a `MenuBarExtra` status item.
-> The icon lives in the macOS menu bar (right half, near the notch on
-> notched MacBooks). Clicking it drops down a panel showing current state.
-> A true Dynamic-Island-style overlay anchored to the notch is on the
-> roadmap but not yet built.
+> **Form factor (v0.1):** a borderless `NSPanel` anchored to the screen-top
+> notch on notched MacBooks. The panel wraps the notch with two "wings" that
+> show status + buddy + project name; tap to expand a drawer of tracked
+> sessions, or to surface a permission panel when Claude Code asks for
+> approval. On non-notched displays the overlay still draws, anchored to
+> the same screen-top region.
 
 ```
 [●] Misland  Claude                    needs approval
@@ -34,7 +35,6 @@ Tool: Bash
 
 ## What it explicitly does not do (v0.1)
 
-- ❌ True notch overlay (Dynamic Island style) — uses standard menu bar dropdown for now
 - ❌ Cloud sync, iPhone companion, plugin marketplace, remote launch
 - ❌ Any outbound network in v1 except Sparkle update check (when configured)
 - ❌ Reading the `claude` binary or hashing internals
@@ -70,15 +70,17 @@ xcodegen generate
 open Misland.xcodeproj
 ```
 
-Cmd+R in Xcode to launch. The menu bar gets a status icon. Open **Settings → Hooks → Install hooks** to wire up Claude Code.
+Cmd+R in Xcode to launch. The notch overlay appears at the top of your
+primary display. Right-click the bar to open **Settings → Hooks → Install
+hooks** and wire up Claude Code.
 
 ## Usage
 
 1. **Install hooks** in Settings. This merges entries into `~/.claude/settings.json`.
 2. **Restart Claude Code** so it re-reads its settings.
-3. Use Claude Code normally. The menu bar icon turns:
+3. Use Claude Code normally. The status dot in the notch bar turns:
    - 🔵 cyan — processing
-   - 🟠 orange — needs your approval (with the panel + 30 s timer)
+   - 🟠 orange — needs your approval (the permission panel slides down + 30 s timer)
    - 🟢 green — ready / done
 
 Gemini CLI: just use it. If your data dir is one of `~/.gemini`, `~/.config/gemini`, `~/.config/google/gemini`, Misland will pick it up. Otherwise set `MISLAND_GEMINI_DIR=/your/path` before launching the app.
@@ -95,10 +97,11 @@ misland-hook (Swift CLI)   GeminiActivityWatcher (in-app)
    │
    ▼
 Misland.app
-   ├─ HookSocketServer   verifies envelope, dedups nonce, dispatches to store
-   ├─ SessionStore        single-session state machine (claude > gemini priority)
-   ├─ PermissionTimeoutCoordinator   auto-deny after 30 s
-   └─ SwiftUI MenuBarExtra + Settings WindowGroup
+   ├─ HookSocketServer              verifies envelope, dedups nonce, dispatches to store
+   ├─ SessionStore                  multi-session state machine (claude > gemini priority)
+   ├─ PermissionTimeoutCoordinator  per-session timers, auto-deny after 30 s
+   ├─ NotchPanelController          borderless NSPanel anchored to the notch
+   └─ SwiftUI NotchView + Settings WindowGroup
 ```
 
 `MislandCore` (SwiftPM library) holds all business logic — Foundation + CryptoKit + Darwin POSIX, no AppKit. The bridge CLI links only Core (~1 MB binary, <30 ms cold start). The app links Core + AppKit/SwiftUI.
@@ -106,7 +109,7 @@ Misland.app
 ## Development
 
 ```bash
-swift test           # 95 unit + integration tests, ~4 s
+swift test           # 108 unit + integration tests, ~4 s
 swift build          # bridge CLI only
 xcodegen generate    # regenerate Xcode project from project.yml
 xcodebuild -scheme Misland build   # full app
@@ -119,9 +122,12 @@ xcodebuild -scheme Misland build   # full app
 - [x] W3 — Permission panel + 30s default-deny + arg sanitization
 - [x] W4 — Gemini CLI activity watcher
 - [x] W5 — Settings UI, sounds, i18n, pixel buddies
+- [x] **Notch overlay** — borderless `NSPanel` anchored to the screen-top notch with expand/collapse drawer (the original Misland vision)
+- [x] Multi-session permission timers (independent per-session 30s countdown)
 - [ ] W6 — Sparkle auto-update, Developer ID + Notarize
-- [ ] **True notch overlay** — replace `MenuBarExtra` with a borderless `NSPanel` anchored to the screen-top notch (this is the original Misland vision)
+- [ ] User-configurable permission timeout (PRD says 10–300 s; backend supports it, Settings UI doesn't expose it yet)
 - [ ] Better pixel art for the 9 buddies
+- [ ] Graceful fallback / behavior on non-notched displays
 
 ## License
 
